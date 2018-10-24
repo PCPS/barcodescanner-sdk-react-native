@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 
 import {
   AppRegistry,
+  AppState,
   StyleSheet,
   Text,
   findNodeHandle,
@@ -34,6 +35,7 @@ export default class ScanScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isPickerVisible: true,
       buttonDisabled: true,
       text: 'Scan a code'
     }
@@ -113,6 +115,7 @@ export default class ScanScreen extends Component {
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.KIX, false);
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.DOTCODE, false);
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.MICROQR, false);
+    this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.CODE32, false);
     this.scanSpecs.scanSettings.symbologies[Barcode.Symbology.QR].colorInvertedEnabled = false;
     this.scanSpecs.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].colorInvertedEnabled = false;
     this.scanSpecs.scanSettings.activeScanningAreaCenterY = 0.5;
@@ -148,6 +151,7 @@ export default class ScanScreen extends Component {
   componentDidMount() {
     this.props.navigation.addListener('didFocus', this._onFocus);
     this.props.navigation.addListener('didBlur', this._onBlur);
+    AppState.addEventListener('change', this._handleAppStateChange);
     this.scanner.startScanning();
   }
 
@@ -162,6 +166,7 @@ export default class ScanScreen extends Component {
   componentWillUnmount() {
     this.props.navigation.removeListener('didFocus', this._onBlur);
     this.props.navigation.removeListener('didBlur', this._onFocus);
+    AppState.removeEventListener('change', this._handleAppStateChange);
     Events.rm('fetch', 'scanTab');
     Events.rm('pickersTabOpened', 'scanTab');
     Events.rm('settingsTabOpened', 'scanTab');
@@ -177,17 +182,31 @@ export default class ScanScreen extends Component {
     this.stopScanning();
     this.setState({isFocused: false});
   };
+  
+  _handleAppStateChange = (nextAppState) => {
+    if (nextAppState.match(/inactive|background/)) {
+      this.stopScanning();
+    } else {
+      this.fetchSettings();
+      this.startScanning();
+    }
+  }
 
   render() {
     return (
       <View
         style={{ flex: 1 }}>
         <StatusBar style={{ backgroundColor: 'white' }}/>
-        <BarcodePicker
-          style={{ flex: 1 }}
-          onScan={ (session) => { this.onScan(session) }}
-          scanSettings= { new ScanSettings() }
-          ref={(scan) => { this.scanner = scan }}/>
+        <View
+          style={{ flex: 1 }}>
+          {this.state.isPickerVisible && (
+            <BarcodePicker
+              style={{ flex: 1 }}
+              onScan={ (session) => { this.onScan(session) }}
+              scanSettings= { new ScanSettings() }
+              ref={(scan) => { this.scanner = scan }}/>
+          )}
+        </View>
         <Text
           style={{
             flex: 1,
@@ -214,13 +233,11 @@ export default class ScanScreen extends Component {
     this.scanner.resumeScanning();
   }
 
-  pauseScanning() {
-    this.setState({ buttonDisabled: false });
-    this.scanner.pauseScanning();
-  }
-
   stopScanning() {
-    this.setState({ buttonDisabled: false });
+    this.setState({
+      isPickerVisible: false,
+      buttonDisabled: false
+    });
     if (this.scanner) {
       this.scanner.stopScanning();
       this.scanner = null
@@ -228,8 +245,10 @@ export default class ScanScreen extends Component {
   }
 
   startScanning() {
-    this.forceUpdate()
-    this.setState({ buttonDisabled: true });
+    this.setState({
+      isPickerVisible: true,
+      buttonDisabled: true
+    });
     if (this.scanner) {
       this.scanner.startScanning()
     }

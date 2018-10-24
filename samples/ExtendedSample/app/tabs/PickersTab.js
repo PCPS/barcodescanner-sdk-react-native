@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 
 import {
   AppRegistry,
+  AppState,
   StyleSheet,
   Text,
   View,
@@ -31,6 +32,7 @@ import {
 import Events from 'react-native-simple-events';
 import CustomClickableElement from '../components/CustomClickableElement';
 import StatusBar from '../components/StatusBar';
+import SplitView from '../components/SplitView';
 
 export default class PickersTab extends Component {
 
@@ -52,7 +54,8 @@ export default class PickersTab extends Component {
   state = {
     isScaledPickerVisible: false,
     isCroppedPickerVisible: false,
-    isFullscreenPickerVisible: false
+    isFullscreenPickerVisible: false,
+    isSplitViewVisible: false
   }
 
   showScaledPicker = () => {
@@ -72,12 +75,19 @@ export default class PickersTab extends Component {
       isFullscreenPickerVisible: true
     });
   }
+  
+  showSplitView = () => {
+    this.setState({
+      isSplitViewVisible: true
+    });
+  }
 
   hidePicker = () => {
     this.setState({
       isScaledPickerVisible: false,
       isCroppedPickerVisible: false,
-      isFullscreenPickerVisible: false
+      isFullscreenPickerVisible: false,
+      isSplitViewVisible: false
     });
   }
 
@@ -98,18 +108,18 @@ export default class PickersTab extends Component {
       this.scanner.applySettings(this.scanSpecs.scanSettings);
       this.scanner.setGuiStyle(this.scanSpecs.overlaySettings.guiStyle);
       this.scanner.setViewfinderDimension(
-        this.scanSpecs.overlaySettings.viewfinderSize.width,
-        this.scanSpecs.overlaySettings.viewfinderSize.height,
-        this.scanSpecs.overlaySettings.viewfinderSize.landscapeWidth,
-        this.scanSpecs.overlaySettings.viewfinderSize.landscapeHeight);
+      this.scanSpecs.overlaySettings.viewfinderSize.width,
+      this.scanSpecs.overlaySettings.viewfinderSize.height,
+      this.scanSpecs.overlaySettings.viewfinderSize.landscapeWidth,
+      this.scanSpecs.overlaySettings.viewfinderSize.landscapeHeight);
       this.scanner.setBeepEnabled(this.scanSpecs.overlaySettings.beep);
       this.scanner.setVibrateEnabled(this.scanSpecs.overlaySettings.vibrate);
       this.scanner.setTorchEnabled(this.scanSpecs.overlaySettings.torchVisible);
       this.scanner.setTorchButtonMarginsAndSize(this.scanSpecs.overlaySettings.torchOffset.left,
-        this.scanSpecs.overlaySettings.torchOffset.top, 40, 40);
+      this.scanSpecs.overlaySettings.torchOffset.top, 40, 40);
       this.scanner.setCameraSwitchVisibility(this.scanSpecs.overlaySettings.cameraSwitchVisibility);
       this.scanner.setCameraSwitchMarginsAndSize(this.scanSpecs.overlaySettings.cameraSwitchOffset.right,
-        this.scanSpecs.overlaySettings.cameraSwitchOffset.top, 40, 40);
+      this.scanSpecs.overlaySettings.cameraSwitchOffset.top, 40, 40);
     }
   }
 
@@ -143,6 +153,7 @@ export default class PickersTab extends Component {
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.KIX, false);
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.DOTCODE, false);
     this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.MICROQR, false);
+    this.scanSpecs.scanSettings.setSymbologyEnabled(Barcode.Symbology.CODE32, false);
     this.scanSpecs.scanSettings.symbologies[Barcode.Symbology.QR].colorInvertedEnabled = false;
     this.scanSpecs.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].colorInvertedEnabled = false;
     this.scanSpecs.scanSettings.activeScanningAreaCenterY = 0.5;
@@ -178,6 +189,7 @@ export default class PickersTab extends Component {
   componentDidMount() {
     this.props.navigation.addListener('didFocus', this._onFocus);
     this.props.navigation.addListener('didBlur', this._onBlur);
+    AppState.addEventListener('change', this._handleAppStateChange);
   }
 
   componentWillMount() {
@@ -190,6 +202,7 @@ export default class PickersTab extends Component {
   componentWillUnmount() {
     this.props.navigation.removeListener('didFocus', this._onBlur);
     this.props.navigation.removeListener('didBlur', this._onFocus);
+    AppState.removeEventListener('change', this._handleAppStateChange);
     Events.rm('fetchForPickersTab', 'pickersTab');
     Events.rm('scanTabOpened', 'pickersTab');
     Events.rm('settingsTabOpened', 'pickersTab');
@@ -204,6 +217,15 @@ export default class PickersTab extends Component {
     this.stopScanning();
     this.setState({isFocused: false});
   };
+  
+  _handleAppStateChange = (nextAppState) => {
+    if (nextAppState.match(/inactive|background/)) {
+      this.stopScanning();
+    } else {
+      this.fetchSettings();
+      this.startScanning();
+    }
+  }
 
   render() {
     return (
@@ -232,6 +254,10 @@ export default class PickersTab extends Component {
               <CustomClickableElement
                 onPress={() => {this.showFullscreenPicker()}}
                 mainLabel="Fullscreen Picker"
+              />
+              <CustomClickableElement
+                onPress={() => {this.showSplitView()}}
+                mainLabel="Split View"
               />
             </ScrollView>
               {this.state.isScaledPickerVisible && (
@@ -314,6 +340,27 @@ export default class PickersTab extends Component {
                   </View>
                 </View>
               )}
+              {this.state.isSplitViewVisible && (
+                <View style={{width: '100%',
+                height: '100%',
+                position: 'absolute',
+                alignItems: 'stretch',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(52, 52, 52, 0.8)'}}>
+                  <View style={{width: '100%',
+                  height: '100%',
+                  alignItems: 'stretch',
+                  justifyContent: 'center' }}>
+                    <TouchableWithoutFeedback onPress={() => {this.hidePicker()}} >
+                      <SplitView
+                        style={{ width: '100%', height: '100%' }}
+                        ref={(scan) => {
+                          this.scanner = scan
+                        }}/>
+                    </TouchableWithoutFeedback>
+                  </View>
+                </View>
+              )}
           </View>
         </TouchableWithoutFeedback>
       </View>
@@ -327,22 +374,9 @@ export default class PickersTab extends Component {
     }
   }
 
-  resumeScanning() {
-    if (this.scanner) {
-      this.scanner.resumeScanning();
-    }
-  }
-
-  pauseScanning() {
-    if (this.scanner) {
-      this.scanner.pauseScanning();
-    }
-  }
-
   stopScanning() {
     if (this.scanner) {
       this.scanner.stopScanning();
-      this.scanner = null
     }
     this.hidePicker()
   }

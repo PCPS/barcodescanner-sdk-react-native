@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   AppRegistry,
+  AppState,
   StyleSheet,
   Text,
   findNodeHandle,
@@ -30,7 +31,6 @@ export default class SimpleSample extends Component {
     this.settings.setSymbologyEnabled(Barcode.Symbology.QR, true);
     this.settings.setSymbologyEnabled(Barcode.Symbology.DATA_MATRIX, true);
     this.settings.setSymbologyEnabled(Barcode.Symbology.CODE128, true);
-    this.settings.setSymbologyEnabled(Barcode.Symbology.MICROQR, true);
 
     /* Some 1d barcode symbologies allow you to encode variable-length data. By default, the
        Scandit BarcodeScanner SDK only scans barcodes in a certain length range. If your
@@ -45,6 +45,19 @@ export default class SimpleSample extends Component {
 
   componentDidMount() {
     this.scanner.startScanning();
+    AppState.addEventListener('change', this._handleAppStateChange);
+  }
+  
+  componentWillUnmount() {
+    AppState.removeEventListener('change', this._handleAppStateChange);
+  }
+  
+  _handleAppStateChange = (nextAppState) => {
+    if (nextAppState.match(/inactive|background/)) {
+      this.scanner.stopScanning();
+    } else {
+      this.scanner.startScanning();
+    }
   }
 
   render() {

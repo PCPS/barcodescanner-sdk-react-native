@@ -1,33 +1,24 @@
 import React, { Component } from 'react';
 
 import {
-  AppRegistry,
-  StyleSheet,
   Text,
   View,
-  Button,
   ActivityIndicator,
   AsyncStorage,
   ScrollView,
-  Switch,
-  Slider,
   Picker,
   Image
 } from 'react-native';
 
 import {
   Barcode,
+  Rect,
   SymbologySettings,
-  ScanSettings,
-  ScanOverlay
-} from 'scandit-react-native';
+  ScanOverlay} from 'scandit-react-native';
 
-import {
-  TabNavigator
-} from 'react-navigation';
 
 import Events from 'react-native-simple-events';
-import LabeledSwitch from '../components/LabeledSwitch'
+import LabeledSwitch, {LabeledSwitchWithFunctionValue} from '../components/LabeledSwitch'
 import LabeledSlider from '../components/LabeledSlider'
 import StatusBar from '../components/StatusBar'
 
@@ -261,6 +252,40 @@ export default class SettingsTab extends Component {
                 this.setState(this.state);
               }}
             />
+            <LabeledSwitchWithFunctionValue
+              label='DPM Data Matrix'
+              disabled={!this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].enabled}
+              value={() => {
+                if (!this.state.scanSettings.activeScanningAreaPortrait || !this.state.scanSettings.activeScanningAreaLandscape) {
+                  return false;
+                }
+                const scanArea = new Rect(0, 0, 0.33, 0.33);
+                const isRestrictedAreaPortrait = this.state.scanSettings.activeScanningAreaPortrait.x === scanArea.x && this.state.scanSettings.activeScanningAreaPortrait.y === scanArea.y && this.state.scanSettings.activeScanningAreaPortrait.width === scanArea.width && this.state.scanSettings.activeScanningAreaPortrait.height === scanArea.height;
+                const isRestrictedAreaLandscape = this.state.scanSettings.activeScanningAreaLandscape.x === scanArea.x && this.state.scanSettings.activeScanningAreaLandscape.y === scanArea.y && this.state.scanSettings.activeScanningAreaLandscape.width === scanArea.width && this.state.scanSettings.activeScanningAreaLandscape.height === scanArea.height;
+                const isRestrictedScanningAreaEnabled = this.state.scanSettings.restrictedAreaScanningEnabled;
+                const containsDPMExtension = this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].extensions.indexOf(SymbologySettings.Extension.DIRECT_PART_MARKING_MODE) > -1;
+                const isDataMatrixSymbologyEnabled = this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].enabled;
+                const value = isRestrictedAreaPortrait && isRestrictedAreaLandscape && isRestrictedScanningAreaEnabled && containsDPMExtension && isDataMatrixSymbologyEnabled;
+                return value;
+              }}
+              listener={(value) => {
+                const scanArea = value ? new Rect(0, 0, 0.33, 0.33) : new Rect(0, 0, 1, 1);
+                if (value) {
+                  // Enabling the direct_part_marking_mode extension comes at the cost of increased frame processing times.
+                  // It is recommended to restrict the scanning area to a smaller part of the image for best performance.
+                  this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].extensions.push(SymbologySettings.Extension.DIRECT_PART_MARKING_MODE);
+                } else {
+                  const index = this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].extensions.indexOf(SymbologySettings.Extension.DIRECT_PART_MARKING_MODE);
+                  if (index > -1) {
+                    this.state.scanSettings.symbologies[Barcode.Symbology.DATA_MATRIX].extensions.splice(index, 1);
+                  }
+                }
+                this.state.scanSettings.activeScanningAreaPortrait = scanArea;
+                this.state.scanSettings.activeScanningAreaLandscape = scanArea;
+                this.state.scanSettings.restrictedAreaScanningEnabled = value;
+                this.setState(this.state);
+              }}
+            />
             <LabeledSwitch
               label='PDF417'
               value={this.state.scanSettings.symbologies[Barcode.Symbology.PDF417].enabled}
@@ -322,6 +347,14 @@ export default class SettingsTab extends Component {
               value={this.state.scanSettings.symbologies[Barcode.Symbology.MICROQR].enabled}
               listener={(value) => {
                 this.state.scanSettings.symbologies[Barcode.Symbology.MICROQR].enabled = value;
+                this.setState(this.state);
+              }}
+            />
+            <LabeledSwitch
+              label='Code 32'
+              value={this.state.scanSettings.symbologies[Barcode.Symbology.CODE32].enabled}
+              listener={(value) => {
+                this.state.scanSettings.symbologies[Barcode.Symbology.CODE32].enabled = value;
                 this.setState(this.state);
               }}
             />

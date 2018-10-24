@@ -305,7 +305,7 @@ public class Scandit {
     /**
     *  @brief Prop used to set the text recognition callback.
     */
-    public function onTextRecognized;
+    public function onScanditTextRecognized;
 
     /**
     * @brief Reconfigure the barcode picker with new settings

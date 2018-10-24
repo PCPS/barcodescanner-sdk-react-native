@@ -20,7 +20,7 @@
 @property (nonatomic, copy, nullable) RCTBubblingEventBlock onScan;
 @property (nonatomic, copy, nullable) RCTBubblingEventBlock onBarcodeFrameAvailable;
 @property (nonatomic, copy, nullable) RCTBubblingEventBlock onRecognizeNewCodes;
-@property (nonatomic, copy, nullable) RCTBubblingEventBlock onTextRecognized;
+@property (nonatomic, copy, nullable) RCTBubblingEventBlock onScanditTextRecognized;
 @property (nonatomic, copy, nullable) RCTBubblingEventBlock onSettingsApplied;
 
 - (void)finishOnScanCallbackShouldStop:(BOOL)shouldStop

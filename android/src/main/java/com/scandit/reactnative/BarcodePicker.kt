@@ -97,7 +97,7 @@ class BarcodePicker : SimpleViewManager<BarcodePicker>(), OnScanListener, TextRe
                 "onBarcodeFrameAvailable", MapBuilder.of("registrationName", "onBarcodeFrameAvailable"),
                 "onRecognizeNewCodes", MapBuilder.of("registrationName", "onRecognizeNewCodes"),
                 "onSettingsApplied", MapBuilder.of("registrationName", "onSettingsApplied"),
-                "onTextRecognized", MapBuilder.of("registrationName", "onTextRecognized")
+                "onScanditTextRecognized", MapBuilder.of("registrationName", "onScanditTextRecognized")
         )
     }
 
@@ -166,7 +166,7 @@ class BarcodePicker : SimpleViewManager<BarcodePicker>(), OnScanListener, TextRe
         val context = picker?.context as ReactContext?
         event.putString("text", text?.text)
         context?.getJSModule(RCTEventEmitter::class.java)?.receiveEvent(picker?.id ?: 0,
-                "onTextRecognized", event)
+                "onScanditTextRecognized", event)
         return TextRecognitionListener.PICKER_STATE_ACTIVE
     }
 

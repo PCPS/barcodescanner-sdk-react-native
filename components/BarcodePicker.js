@@ -22,7 +22,7 @@ var iface = {
         onRecognizeNewCodes: PropTypes.func,
         onBarcodeFrameAvailable: PropTypes.func,
         onSettingsApplied: PropTypes.func,
-        onTextRecognized: PropTypes.func,
+        onScanditTextRecognized: PropTypes.func,
         ...View.propTypes
   }
 };
@@ -37,7 +37,7 @@ export class BarcodePicker extends React.Component {
         this.onRecognizeNewCodes = this.onRecognizeNewCodes.bind(this);
         this.onBarcodeFrameAvailable = this.onBarcodeFrameAvailable.bind(this);
         this.onSettingsApplied = this.onSettingsApplied.bind(this);
-        this.onTextRecognized = this.onTextRecognized.bind(this);
+        this.onScanditTextRecognized = this.onScanditTextRecognized.bind(this);
     }
 
     componentDidMount() {
@@ -77,11 +77,11 @@ export class BarcodePicker extends React.Component {
         this.props.onSettingsApplied(event.nativeEvent);
     }
 
-    onTextRecognized(event: Event) {
-        if (!this.props.onTextRecognized) {
+    onScanditTextRecognized(event: Event) {
+        if (!this.props.onScanditTextRecognized) {
             return;
         }
-        this.props.onTextRecognized(event.nativeEvent.text);
+        this.props.onScanditTextRecognized(event.nativeEvent.text);
     }
 
     render() {
@@ -91,7 +91,7 @@ export class BarcodePicker extends React.Component {
             onRecognizeNewCodes = {this.onRecognizeNewCodes}
             onBarcodeFrameAvailable = {this.onBarcodeFrameAvailable}
             onSettingsApplied = {this.onSettingsApplied}
-            onTextRecognized = {this.onTextRecognized}
+            onScanditTextRecognized = {this.onScanditTextRecognized}
             ref = {(scan) => {this.reference = scan}} />;
     }
 
